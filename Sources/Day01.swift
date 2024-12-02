@@ -8,9 +8,7 @@ struct Day01: AdventDay {
   var entities: [(Int, Int)] {
     data.split(separator: "\n").map {
       let values = $0.split(separator: "   ")
-      let a = Int(values[0])!
-      let b = Int(values[1])!
-      return (a, b)
+      return (Int(values[0])!,Int(values[1])!)
     }
   }
 
@@ -28,32 +26,22 @@ struct Day01: AdventDay {
   func part1() -> Any {
     
     // Get an array for each column of numbers
-    var (array1, array2) = makeArrays(entities)
-    print("array1 has \(array1.count) items, array2 has \(array2.count) items")
-    // sort the arrays in place
-    array1.sort()
-    array2.sort()
-    print("DONE SORTING!!")
-    let count=array1.count
-    var distances: [Int] = []
+    let arrays = makeArrays(entities)
+    let array1 = arrays.0.sorted()
+    let array2 = arrays.1.sorted()
+    let zippedArrays = zip(array1, array2)
     
-    for i in 0..<count{
-        let value =  abs(array1[i] - array2[i])
-        distances.append(value)
-    }
-
-    return distances.reduce(0,+)
-    
+    return zippedArrays.map{
+        abs($0.0 - $0.1)
+    }.reduce(0,+)
 
   }
-  // Replace this with your solution for the second part of the day's challenge.
+  
   func part2() -> Any {
     // Get an array for each column of numbers
     let (array1, array2) = makeArrays(entities)
-    print("array1 has \(array1.count) items, array2 has \(array2.count) items")
     
     // make a new empty dictionary to track the number of occurrances of each value in array2
-    
     var occurrences: [Int:Int] = [:]
     
     for possibleKey in array2 {
@@ -66,7 +54,6 @@ struct Day01: AdventDay {
           occurrences[possibleKey] = 1
         }
     }
-    print("done making the dictionary of list 2 occurrances.")
     
     let resultArray = array1.map{
         let numberOfInstances = occurrences[$0] ?? 0
