@@ -48,8 +48,34 @@ struct Day01: AdventDay {
   }
   // Replace this with your solution for the second part of the day's challenge.
   func part2() -> Any {
-    // Sum the maximum entries in each set of data
-    return "Not yet implemented"
+    // Get an array for each column of numbers
+    let (array1, array2) = makeArrays(entities)
+    print("array1 has \(array1.count) items, array2 has \(array2.count) items")
+    
+    // make a new empty dictionary to track the number of occurrances of each value in array2
+    
+    var occurrences: [Int:Int] = [:]
+    
+    for possibleKey in array2 {
+        // if this value is already a key, increment its value
+        if let existingValue = occurrences[possibleKey] {
+            let newValue = existingValue + 1
+          occurrences[possibleKey] = newValue
+        } else {
+            // not alerady a key, so add it as a key with 1 count
+          occurrences[possibleKey] = 1
+        }
+    }
+    print("done making the dictionary of list 2 occurrances.")
+    
+    let resultArray = array1.map{
+        let numberOfInstances = occurrences[$0] ?? 0
+        return $0 * numberOfInstances
+    }
+
+    
+    return resultArray.reduce(0, +)
+    
   }
 
 }
