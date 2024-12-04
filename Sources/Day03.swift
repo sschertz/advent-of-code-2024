@@ -7,19 +7,36 @@ struct Day03: AdventDay {
   func part1() -> Any {
     let mulPattern = /mul\((\d{1,3}),(\d{1,3})\)/
     let matches = data.matches(of: mulPattern)
-
-    for match in matches {
-        print("0: \(match.0), 1: \(match.1), 2: \(match.2)")
-    }
-
+    
     return matches.map{
-        Int($0.1)! * Int($0.2)!
+      Int($0.1)! * Int($0.2)!
     }.reduce(0, +)
   }
-
-  // Replace this with your solution for the second part of the day's challenge.
+  
   func part2() -> Any {
-    // Sum the maximum entries in each set of data
-    return 0
+    
+    let patternWithDoDont = /don't\(\)|do\(\)|mul\((\d{1,3}),(\d{1,3})\)/
+    let matches = data.matches(of: patternWithDoDont)
+    
+    var validInstructions: [Int] = []
+    var isDoMatches = true
+    
+    for match in matches {
+      //print("Processing match: 0: \(match.0), 1: \(String(describing: match.1)), 2: \(String(describing: match.2)))")
+      switch match.0 {
+      case "don't()":
+        isDoMatches = false
+      case "do()":
+        isDoMatches = true
+      default:
+        if isDoMatches {
+          if let m1 = match.1, let m2 = match.2 {
+            validInstructions.append(Int(m1)! * Int(m2)!)
+          }
+        }
+      }
+    }
+    
+    return validInstructions.reduce(0, +)
   }
 }
