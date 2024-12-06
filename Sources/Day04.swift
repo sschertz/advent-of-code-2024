@@ -78,16 +78,12 @@ struct Day04: AdventDay {
     let (grid,startingChars) = makeGrid(letterToSave: word.first!)
     let middleCoordDistance = 1 //Ideally this should be calculated
     var middleCoordinates: [(c:Int, r:Int)] = []
-    let diagonalDirections = [
-      Array2D<Character>.Direction.upLeft,
-      Array2D<Character>.Direction.upRight,
-      Array2D<Character>.Direction.downLeft,
-      Array2D<Character>.Direction.downRight
-    ]
+    let diagonalDirections = Array2D<Character>.Direction.diagonalDirections()
     
     for coord in startingChars{
-      // check all 8 directions for valid words
-      for direction in Array2D<Character>.Direction.allCases{
+      // Check just the diagonal directions for words -- horiz and vertical
+      // directions can't form an "X"
+      for direction in diagonalDirections{
         // Don't bother checking for words that don't fit
         guard grid.isValidPath(from: coord, direction: direction, distance: word.count-1) else {
           continue
@@ -108,7 +104,7 @@ struct Day04: AdventDay {
             foundWord = true
           }
         }
-        if foundWord && diagonalDirections.contains(direction){
+        if foundWord {
           // Instead of saving a count of found instances of "MAS",
           // just save the coordinates of the MIDDLE of the word
           // to use to find intersections later.
@@ -122,28 +118,19 @@ struct Day04: AdventDay {
     
     print("We found \(middleCoordinates.count) middle coords")
     
-    let sortedByColumn = middleCoordinates.sorted{
-      if $0 == $1 { return false}
-      return $0.c < $1.c
+    let sorted = middleCoordinates.sorted(by: <)
+    
+    var duplicateCount = 0
+    
+    sorted.enumerated().forEach{
+        let (index,coord) = $0
+        guard index+1 < sorted.endIndex else { return }
+        if coord == sorted[index+1] {
+            duplicateCount += 1
+        }
     }
     
-    let finalSort = sortedByColumn.sorted{
-      if $0 == $1{ return false }
-      return $0.r < $1.r
-    }
-    var dupCount = 0
-    
-    for index in 0..<finalSort.endIndex{
-      //print(finalSort[index])
-      guard index + 1 < finalSort.endIndex else {
-        break
-      }
-      if finalSort[index] == finalSort[index+1]{
-        dupCount += 1
-      }
-    }
-    
-    return dupCount
+    return duplicateCount
   }
 }
 
@@ -231,6 +218,11 @@ public struct Array2D<T> {
       case .downRight:
         return (c: c+distance, r: r+distance)
       }
+    }
+    
+    static func diagonalDirections() -> [Direction] {
+      return [.upLeft, .upRight, .downLeft, .downRight]
+      
     }
   }
 }
