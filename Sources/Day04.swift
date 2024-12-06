@@ -35,9 +35,8 @@ struct Day04: AdventDay {
   func part1() -> Any {
     let word="XMAS"
     var foundWordsCount = 0
-    let startingChar = word.first!
     
-    let (grid,startingChars) = makeGrid(letterToSave: startingChar)
+    let (grid,startingChars) = makeGrid(letterToSave: word.first!)
     
     for coord in startingChars{
       // check all 8 directions for valid words
@@ -75,7 +74,76 @@ struct Day04: AdventDay {
   
   // Replace this with your solution for the second part of the day's challenge.
   func part2() -> Any {
-    return 0
+    let word = "MAS"
+    let (grid,startingChars) = makeGrid(letterToSave: word.first!)
+    let middleCoordDistance = 1 //Ideally this should be calculated
+    var middleCoordinates: [(c:Int, r:Int)] = []
+    let diagonalDirections = [
+      Array2D<Character>.Direction.upLeft,
+      Array2D<Character>.Direction.upRight,
+      Array2D<Character>.Direction.downLeft,
+      Array2D<Character>.Direction.downRight
+    ]
+    
+    for coord in startingChars{
+      // check all 8 directions for valid words
+      for direction in Array2D<Character>.Direction.allCases{
+        // Don't bother checking for words that don't fit
+        guard grid.isValidPath(from: coord, direction: direction, distance: word.count-1) else {
+          continue
+        }
+        
+        var (c,r) = coord
+        var foundWord = false
+        for char in word{
+          guard char==grid[c,r] else{
+            foundWord = false
+            break // Bail out of loop, no point in checking the
+            // rest of the letters.
+          }
+          // The letter is in our word, so continue the loop
+          if let newCoord = grid.move(direction, from: (c: c, r: r)){
+            c=newCoord.c
+            r=newCoord.r
+            foundWord = true
+          }
+        }
+        if foundWord && diagonalDirections.contains(direction){
+          // Instead of saving a count of found instances of "MAS",
+          // just save the coordinates of the MIDDLE of the word
+          // to use to find intersections later.
+          let middleCoord = grid.move(direction,from: (c: coord.c, r:coord.r), by: middleCoordDistance)!
+          middleCoordinates.append(middleCoord)
+        }
+      }
+    }
+    
+    // middleCoordinates should now contain all the middle coords of the found items
+    
+    print("We found \(middleCoordinates.count) middle coords")
+    
+    let sortedByColumn = middleCoordinates.sorted{
+      if $0 == $1 { return false}
+      return $0.c < $1.c
+    }
+    
+    let finalSort = sortedByColumn.sorted{
+      if $0 == $1{ return false }
+      return $0.r < $1.r
+    }
+    var dupCount = 0
+    
+    for index in 0..<finalSort.endIndex{
+      //print(finalSort[index])
+      guard index + 1 < finalSort.endIndex else {
+        break
+      }
+      if finalSort[index] == finalSort[index+1]{
+        dupCount += 1
+      }
+    }
+    
+    return dupCount
   }
 }
 
