@@ -62,12 +62,72 @@ struct Day05: AdventDay {
         return $0[middleIx]
       } else { return nil}
     }.reduce(0, +)
-    
-    
   }
   
-  // Replace this with your solution for the second part of the day's challenge.
   func part2() -> Any {
-    return 0
+    
+    let input = entities
+    
+    let cantBeBefore = makeRuleDictionary(strings: input.first!)
+    let reports = makeListOfReports(string: input.last!)
+    
+    let invalidReports = reports.compactMap {
+      var isValidReport = true
+      
+      var reportToProcess = $0
+      
+      
+      while !reportToProcess.isEmpty && isValidReport {
+        let valueToCheck = reportToProcess.first!
+        let remainingItems = reportToProcess.dropFirst()
+        if let rule = cantBeBefore[valueToCheck]{
+          // There is a rule for valueToCheck
+          // allSatisfy should return true if NONE of the numbers
+          // in the report are also in list of numbers that the value
+          // can't be before
+          isValidReport = remainingItems.allSatisfy{
+            return !rule.contains($0)
+          }
+        }
+        reportToProcess = Array(remainingItems)
+      }
+      
+      if !isValidReport{
+        return $0
+      } else { return nil}
+    }
+    
+    return invalidReports.compactMap{
+      var reportToProcess = $0
+      var sortedReport:[Int] = []
+      
+      while !reportToProcess.isEmpty {
+        let valueToCheck = reportToProcess.first!
+        var remainingItems = reportToProcess.dropFirst()
+        guard !remainingItems.isEmpty else {
+          // this was the last item
+          sortedReport.append(valueToCheck)
+          break
+        }
+        if let rule = cantBeBefore[valueToCheck]{
+          // There are values that cannot be before value to check
+          if remainingItems.allSatisfy({!rule.contains($0)}){
+            // remaining items doesn't contain any values that are in our
+            // rule, so this value is sorted correctly
+            sortedReport.append(valueToCheck)
+          } else {
+            remainingItems.append(valueToCheck)
+          }
+          
+        } else {
+          // There was no rule for this item, so it is in
+          // correct order already. Add to the new sorted array
+          sortedReport.append(valueToCheck)
+        }
+        reportToProcess = Array(remainingItems)
+      }
+      let middleIx = (sortedReport.count-1)/2
+      return sortedReport[middleIx]
+    }.reduce(0, +)
   }
 }
