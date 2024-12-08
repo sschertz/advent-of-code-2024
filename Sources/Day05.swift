@@ -38,9 +38,7 @@ struct Day05: AdventDay {
     
     return reports.compactMap {
       var isValidReport = true
-      
       var reportToProcess = $0
-      
       
       while !reportToProcess.isEmpty && isValidReport {
         let valueToCheck = reportToProcess.first!
@@ -57,10 +55,7 @@ struct Day05: AdventDay {
         reportToProcess = Array(remainingItems)
       }
       
-      if isValidReport{
-        let middleIx = ($0.count-1)/2
-        return $0[middleIx]
-      } else { return nil}
+      if isValidReport{ return $0[($0.count-1)/2] } else { return nil }
     }.reduce(0, +)
   }
   
@@ -71,33 +66,7 @@ struct Day05: AdventDay {
     let cantBeBefore = makeRuleDictionary(strings: input.first!)
     let reports = makeListOfReports(string: input.last!)
     
-    let invalidReports = reports.compactMap {
-      var isValidReport = true
-      
-      var reportToProcess = $0
-      
-      
-      while !reportToProcess.isEmpty && isValidReport {
-        let valueToCheck = reportToProcess.first!
-        let remainingItems = reportToProcess.dropFirst()
-        if let rule = cantBeBefore[valueToCheck]{
-          // There is a rule for valueToCheck
-          // allSatisfy should return true if NONE of the numbers
-          // in the report are also in list of numbers that the value
-          // can't be before
-          isValidReport = remainingItems.allSatisfy{
-            return !rule.contains($0)
-          }
-        }
-        reportToProcess = Array(remainingItems)
-      }
-      
-      if !isValidReport{
-        return $0
-      } else { return nil}
-    }
-    
-    return invalidReports.compactMap{
+    return reports.compactMap{
       var reportToProcess = $0
       var sortedReport:[Int] = []
       
@@ -126,8 +95,9 @@ struct Day05: AdventDay {
         }
         reportToProcess = Array(remainingItems)
       }
-      let middleIx = (sortedReport.count-1)/2
-      return sortedReport[middleIx]
+      if sortedReport != $0 {
+        return sortedReport[(sortedReport.count-1)/2]
+      } else { return nil }
     }.reduce(0, +)
   }
 }
