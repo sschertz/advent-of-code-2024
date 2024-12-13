@@ -1,15 +1,16 @@
 import Algorithms
 
 struct Day06: AdventDay {
+  typealias CharacterGrid = Grid<Character>
   // Save your data in a corresponding text file in the `Data` directory.
   var data: String
 
   // Splits input data into its component parts and convert from string.
   var entities: [String] { data.split(separator: "\n").map { String($0) } }
 
-  func makeGrid(strings: [String]) -> (Grid<Character>, (Int, Int)) {
+  func makeGrid(strings: [String]) -> (CharacterGrid, (Int, Int)) {
 
-    var grid: Grid<Character> = Grid(
+    var grid: CharacterGrid = Grid(
       columns: strings[0].count, rows: strings.count, initialValue: ".")
     var startLocation: (Int, Int) = (0, 0)
     var row = 0
@@ -28,10 +29,46 @@ struct Day06: AdventDay {
     return (grid, startLocation)
   }
 
+  func checkForLoop(for grid:CharacterGrid, from startLocation:(Int,Int)) -> Bool{
+    var direction = CharacterGrid.Direction.up
+    var current = startLocation
+    let grid = grid
+    var visited: Set<PathPoint> = []
+    
+    while true {
+      
+      guard let nextSpace = grid.move(direction, from: current) else {
+        return false // exited the grid so this is a loop
+      }
+      
+      if grid[nextSpace.c,nextSpace.r] == "#" {
+        
+        // is this an obstruction we have seen before?
+        if visited.contains(where: { $0.col == current.0 && $0.row == current.1 && $0.travelDir == direction }) {
+          // this is a loop
+          return true
+        }
+        
+        // This space/direction hits an obstruction, so save
+        // to check later
+        visited.insert(
+          PathPoint(col: current.0, row: current.1, travelDir: direction)
+        )
+        direction = grid.changeDirection(
+          from: direction, to: .right)
+        
+      } else {
+        current = nextSpace
+      }
+      
+    }
+  }
+  
+  
   func part1() -> Any {
     let strings = entities
     var (grid, startLocation) = makeGrid(strings: strings)
-    var currentDirection = Grid<Character>.Direction.up
+    var currentDirection = CharacterGrid.Direction.up
     var validPath = true
 
     while validPath {
@@ -59,152 +96,57 @@ struct Day06: AdventDay {
   func part2() -> Any {
 
     let strings = entities
-    var (grid, startLocation) = makeGrid(strings: strings)
+    let (grid, startLocation) = makeGrid(strings: strings)
     print("Start from \(startLocation)")
-    
 
-    var currentDirection = Grid<Character>.Direction.up
-    var validPath = true
-    var possibleObstructions: [PossibleObstruction] = []
+
+    var direction = CharacterGrid.Direction.up
     var current = startLocation
-    var deadEndLocations: [PossibleObstruction] = []
-    var saveToList = false  // start this false since we can't put an
-    //obstacle on the starting position
-
-    while validPath {
-      if saveToList {
-        possibleObstructions.append(
-          PossibleObstruction(
-            col: current.0,
-            row: current.1,
-            travelDir: currentDirection))
-
+    var loops: [(Int,Int)] = []
+    
+    while true {
+      
+      guard let nextSpace = grid.move(direction, from: current) else {
+        break
       }
-      saveToList = true
-
-      if let nextSpace = grid.move(currentDirection, from: current) {
-        // we have a valid next space. Is it an obstruction?
-        if grid[nextSpace.c, nextSpace.r] == "#" {
-          grid[current.0, current.1] = "T"
-          // change direction, let the next loop process this same spot
-          // but in the new direction
-          currentDirection = currentDirection.turn(to: .right)
-          saveToList = false  // don't save on the next iteration
-          if let deadEnd = grid.move(currentDirection, from: current) {
-            deadEndLocations.append(
-              PossibleObstruction(
-                col: deadEnd.0,
-                row: deadEnd.1,
-                travelDir: currentDirection))
-          } else {
-            validPath = false
-          }
-        } else {
-          grid[current.0, current.1] = "X"  // Mark where we have been
-          current = nextSpace
-        }
-      } else {
-        // we must have hit the end of the grid.
-        validPath = false
-        print("end of path at \(current)")
-      }
-    }
-    // We should now have a list of possible obstructions, and a list
-    // of spots that would make dead ends if changed to an obstruction.
-
-    print("\n\(possibleObstructions.count) after processing the path")
-    print("\(deadEndLocations.count) dead end locations")
-    let noDeadEnds = possibleObstructions.filter {
-      let possible = $0
-      return !deadEndLocations.contains(possible)
-    }
-    print("\(noDeadEnds.count) after filtering out the dead ends")
-
-    // eliminate possible obstructions that we can already see will send
-    // us right off the grid
-    let filteredObstructions = noDeadEnds.filter {
-
-      let originalDir = $0.travelDir
-      let coordinate = ($0.col, $0.row)
-      // Back up one space and then turn right
-      if let newPathStart = grid.move(
-        originalDir.reverse(),
-        from: coordinate)
+      
+      // Skip checking for a loop for the start location, a location
+      // on the path we've already checked, or an original obstruction
+      if nextSpace != startLocation
+          && !loops.contains(where: { $0 == nextSpace })
+          && grid[nextSpace.c,nextSpace.r] != "#"
+          
       {
-        // we were able to back up 1 space. Now turn right
-        let newDirection = originalDir.turn(to: .right)
-        // original point could be a new obstruction IF there is an existing
-        // one in the new path after the turn.
-        return grid.rowOrColContains("#", from: newPathStart, in: newDirection)
-      }
-      // we couldn't backup, so return false
-      print("couldn't backup from \(coordinate)")
-      return false
-    }
-    print(
-      "\(filteredObstructions.count) after filtering out ones we know won't work")
-    //Ok, now we need to check the remaining candidates for loops
-    let candidates = filteredObstructions.compactMap {
-
-      // Reset vars to test another loop
-      validPath = true
-      current = startLocation
-      currentDirection = .up
-      var visited: [PossibleObstruction] = []
-      var isValidObstruction = false
-      // Put the obstruction to test on the grid
-      grid[$0.col, $0.row] = "#"
-
-      while validPath {
-
+        var modifiedGrid = grid
         
-        if (visited.contains{ element in
-          (element.col, element.row) == current && element.travelDir == currentDirection
-        }) {
-          isValidObstruction = true
-          validPath = false
-        }
-
-        if let nextSpace = grid.move(currentDirection, from: current) {
-          // we have a valid next space. Is it an obstruction?
-          if grid[nextSpace.c, nextSpace.r] == "#" {
-            // save the one we are evaluating in our listed of visited obstructions.
-            visited.append(
-              PossibleObstruction(
-                col: current.0, row: current.1, travelDir: currentDirection))
-            currentDirection = currentDirection.turn(to: .right)
-          } else {
-            current = nextSpace
-          }
-        } else {
-          // we must have hit the end of the grid.
-          validPath = false
-          grid[$0.col, $0.row] = "X"
-          isValidObstruction = false
+        modifiedGrid[nextSpace.c,nextSpace.r] = "#"
+        if checkForLoop(for: modifiedGrid, from: startLocation) {
+          loops.append(nextSpace)
         }
       }
-      // done with the loop.
-      //grid[$0.col,$0.row] = "?"
-      print("\ndone with loop for \($0.col),\($0.row). visited contains \(visited.count): ", terminator: " ")
-      visited.forEach{
-        print("(\($0.col),\($0.row),\($0.travelDir))", terminator: ",")
+      
+      // Now continue walking through the grid.
+      if grid[nextSpace.c,nextSpace.r] == "#" {
+        direction = grid.changeDirection(
+          from: direction, to: .right)
+      } else {
+        current = nextSpace
       }
-      if isValidObstruction{ return $0 } else {return nil}
     }
-
-    return candidates.count
+   
+    return loops.count
+  }
+  
+  struct PathPoint: Equatable, Hashable {
+    var col: Int
+    var row: Int
+    var travelDir: CharacterGrid.Direction
   }
 }
 
-struct PossibleObstruction: Equatable, Hashable {
-  var col: Int
-  var row: Int
-  var travelDir: Grid<Character>.Direction
-}
-
 extension Grid {
-
   // So this just takes a start tuple and direction
+  // Not used in my current solution
   func rowOrColContains(
     _ value: T, from start: (Int, Int), in direction: Direction
   ) -> Bool {

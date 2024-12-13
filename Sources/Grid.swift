@@ -9,6 +9,7 @@ public struct Grid<T: Equatable> {
   public let columns: Int
   public let rows: Int
   fileprivate var array: [T]
+  
 
   public init(columns: Int, rows: Int, initialValue: T) {
     self.columns = columns
