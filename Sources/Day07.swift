@@ -23,10 +23,19 @@ struct Day07: AdventDay {
       Array(repeating: "+", count: numberOperators )
       + Array(repeating: "*", count: numberOperators)
     }
+    
+    var operatorsWithConcat: [Character] {
+      Array(repeating: "+", count: numberOperators )
+      + Array(repeating: "*", count: numberOperators)
+      + Array(repeating: "|", count: numberOperators)
+    }
   }
 
   func getOperator (_ input: Character) -> (Int,Int) -> Int {
-    if input == "+" { return (+)} else { return (*)}
+    if input == "+" {
+      return (+)
+    } else if input == "*" { return (*)
+    } else { return (||) }
   }
   
   
@@ -55,8 +64,36 @@ struct Day07: AdventDay {
     }.reduce(0, + )
   }
 
-  // Replace this with your solution for the second part of the day's challenge.
   func part2() -> Any {
-    return 0
+    
+    let equations = entities
+    return equations.compactMap { equation in
+      let result = equation.result
+      var values = equation.values
+      let combinationsToTry = equation.operatorsWithConcat.uniquePermutations(ofCount: equation.numberOperators).map{Array($0)}
+      // print("Find operators to get \(result) from \(values)")
+      
+      // Get the first number to start the reduce
+      let runningTotal = values.removeFirst()
+      
+      // Loop all the combos, bail out when we find a match
+      for comboToTest in combinationsToTry {
+        let testResult = values.enumerated().reduce(runningTotal) { partialResult, nextItem in
+          //partialResult is the sum so far. nextItem is the next value
+          let (operatorIndex,value) = nextItem
+          let operation = getOperator(comboToTest[operatorIndex])
+          return operation(partialResult,value)
+        }
+        if testResult == result { return result }
+      }
+      return nil
+    }.reduce(0, + )
+  }
+}
+
+infix operator ||
+extension Int {
+  static func || (lhs: Int, rhs: Int) -> Int {
+    return Int(String(lhs) + String(rhs))!
   }
 }
