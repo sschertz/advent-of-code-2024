@@ -42,12 +42,9 @@ struct Day08: AdventDay {
       while !antennasToProcess.isEmpty{
         let antenna = antennasToProcess.removeFirst()
         antennasToProcess.forEach{secondAntenna in
-          // can probably move this into the type
-          let colDistance = antenna.col - secondAntenna.col
-          let rowDistance = antenna.row - secondAntenna.row
-          //print("Need to move columns \(colDistance) and rows \(rowDistance)")
-          antinodes.insert(Coordinate(col: antenna.col+colDistance,row: antenna.row+rowDistance))
-          antinodes.insert(Coordinate(col: secondAntenna.col-colDistance, row: secondAntenna.row-rowDistance))
+          let distance = antenna.distanceTo(to: secondAntenna)
+          antinodes.insert(antenna.offsetBy(distance: distance, using: +))
+          antinodes.insert(secondAntenna.offsetBy(distance: distance, using: -))
         }
       }
     }
@@ -57,14 +54,38 @@ struct Day08: AdventDay {
   }
 
   func part2() -> Any {
-    return 0
-  }
-}
-
-struct Coordinate: Equatable, Hashable, CustomStringConvertible {
-  var col: Int
-  var row: Int
-  var description:String {
-    "(\(col),\(row))"
+    let strings = entities
+    let (grid, antennaMap) = makeGrid(strings: strings)
+    
+    var antinodes: Set<Coordinate> = []
+    for (_, antennas) in antennaMap {
+      var antennasToProcess = antennas
+      while !antennasToProcess.isEmpty{
+        let ant1 = antennasToProcess.removeFirst()
+        antennasToProcess.forEach{ant2 in
+          let distance = ant1.distanceTo(to: ant2)
+          var isValidCoord = true
+          var newCoord: Coordinate = ant1
+          while isValidCoord {
+            newCoord = newCoord.offsetBy(distance: distance, using: +)
+            isValidCoord = grid.isValidCoordinate(newCoord.col, newCoord.row)
+            if isValidCoord { antinodes.insert(newCoord) }
+          }
+          isValidCoord = true
+          newCoord = ant2
+          while isValidCoord {
+            newCoord = newCoord.offsetBy(distance: distance, using: -)
+            isValidCoord = grid.isValidCoordinate(newCoord.col, newCoord.row)
+            if isValidCoord { antinodes.insert(newCoord) }
+          }
+          // also add both of these to the list
+          antinodes.insert(ant1)
+          antinodes.insert(ant2)
+          
+        }
+      }
+    }
+    
+    return antinodes.count
   }
 }
