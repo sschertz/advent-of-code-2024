@@ -20,6 +20,7 @@ struct Day09: AdventDay {
   }
   
   func part1() -> Any {
+    
     var compactedFileMap: [Int] = []
     var blocks = entities
     var endIndex = blocks.index(before: blocks.endIndex)
@@ -65,28 +66,34 @@ struct Day09: AdventDay {
     
     var blocks = entities
     
-    while let lastFileIndex =
-            blocks.lastIndex(where: {$0.isFile && !$0.hasMoved}) {
+    var lastBlockIndex = blocks.endIndex-1
+    
+    while lastBlockIndex > blocks.startIndex {
       
-      let lastFile = blocks[lastFileIndex]
+      guard blocks[lastBlockIndex].isFile else {
+        lastBlockIndex -= 1
+        continue
+      }
+      
+      let lastFile = blocks[lastBlockIndex]
       
       guard let firstEmptySpace = blocks.firstIndex(
         where: {!$0.isFile && $0.size >= lastFile.size}),
-            firstEmptySpace < lastFileIndex
+            firstEmptySpace < lastBlockIndex
       else {
         // there are no empty spaces large enough for this block,
         // OR the open spaces are to the right and not eligible
         // flag block to remain here
-        blocks[lastFileIndex].hasMoved = true
+        lastBlockIndex -= 1
         continue
       }
       
       // Now firstEmptySpace is the index of a space large enough to fit
       // the block.
       
-      // convert the file we are moving to an empt space
-      blocks[lastFileIndex].isFile = false
-      blocks[lastFileIndex].fileId = nil
+      // convert the file we are moving to an empty space
+      blocks[lastBlockIndex].isFile = false
+      blocks[lastBlockIndex].fileId = nil
       
       // fill in the block and then insert any remaining empty space
       if let leftoverEmptySpace =
